@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Horror Game 1</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0f0f0f;
+      color: white;
+    }
+
+    /* NAVBAR */
+    .navbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 24px;
+      background: #111;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    }
+
+    .brand {
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .nav-right {
+      position: relative;
+    }
+
+    .login-btn {
+      padding: 6px 14px;
+      background: #ff4747;
+      border: none;
+      color: white;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+
+    .avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: none;
+    }
+
+    /* DROPDOWN */
+    .dropdown {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 45px;
+      background: #1c1c1c;
+      padding: 10px;
+      border-radius: 6px;
+      width: 200px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.6);
+    }
+
+    .dropdown p {
+      font-size: 13px;
+      color: #aaa;
+      word-break: break-all;
+    }
+
+    .dropdown a {
+      display: block;
+      padding: 8px;
+      color: white;
+      text-decoration: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .dropdown a:hover {
+      background: #333;
+    }
+
+    /* MODAL */
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-box {
+      background: #181818;
+      padding: 25px;
+      width: 320px;
+      border-radius: 8px;
+    }
+
+    .modal-box input {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 10px;
+      border-radius: 4px;
+      border: none;
+    }
+
+    .modal-box button {
+      width: 100%;
+      padding: 8px;
+      border: none;
+      margin-top: 5px;
+      cursor: pointer;
+      border-radius: 4px;
+      background: #ff4747;
+      color: white;
+    }
+
+    .link {
+      font-size: 13px;
+      color: #4da6ff;
+      cursor: pointer;
+      text-align: center;
+      margin-top: 8px;
+    }
+
+    /* CONTENT */
+    .content {
+      padding: 40px;
+      max-width: 700px;
+      margin: auto;
+    }
+  </style>
+</head>
+
+<body>
+
+<!-- NAVBAR -->
+<div class="navbar">
+  <div class="brand">XyzGameStdios</div>
+
+  <div class="nav-right">
+    <button id="loginBtn" class="login-btn">Login</button>
+    <img id="avatarBtn" class="avatar">
+    <div id="dropdown" class="dropdown">
+      <p id="dropdownEmail"></p>
+      <a href="profile.html">Profile</a>
+      <a id="logoutBtn">Logout</a>
+    </div>
+  </div>
+</div>
+
+<!-- LOGIN MODAL -->
+<div id="loginModal" class="modal">
+  <div class="modal-box">
+    <h3 id="formTitle">Login</h3>
+
+    <input id="email" placeholder="Email">
+    <input id="password" type="password" placeholder="Password">
+
+    <button id="loginSubmit">Login</button>
+    <button id="registerSubmit" style="display:none">Register</button>
+
+    <div id="forgotPass" class="link">Forgot password?</div>
+
+    <hr style="border:0;border-top:1px solid #333">
+
+    <button id="googleBtn">Login with Google</button>
+
+    <div id="toggleForm" class="link">New user? Register</div>
+  </div>
+</div>
+
+<!-- GAME CONTENT -->
+<div class="content">
+  <h1>Horror Forest</h1>
+  <p>A survival horror experience in a cursed forest.</p>
+
+  <div id="actionArea">Checking status...</div>
+</div>
+
+<script type="module">
+  import {
+    checkAuth,
+    loginUser,
+    registerUser,
+    googleLogin,
+    logoutUser,
+    forgotPassword,
+    getUserData
+  } from "./firebase.js";
+
+  const GAME_ID = "horror_game_01";
+  let currentUser = null;
+  let isLogin = true;
+
+  // ===== AUTH STATE =====
+  checkAuth(async (user) => {
+    currentUser = user;
+
+    if (user) {
+      loginBtn.style.display = "none";
+      avatarBtn.style.display = "block";
+      avatarBtn.src = user.photoURL || "https://i.imgur.com/6VBx3io.png";
+      dropdownEmail.innerText = user.email;
+      await updateGameUI();
+    } else {
+      loginBtn.style.display = "block";
+      avatarBtn.style.display = "none";
+      dropdown.style.display = "none";
+      showLoginToBuy();
+    }
+  });
+
+  // ===== NAVBAR =====
+  loginBtn.onclick = () => loginModal.style.display = "flex";
+
+  avatarBtn.onclick = () => {
+    dropdown.style.display =
+      dropdown.style.display === "block" ? "none" : "block";
+  };
+
+  logoutBtn.onclick = logoutUser;
+
+  loginModal.onclick = (e) => {
+    if (e.target === loginModal) loginModal.style.display = "none";
+  };
+
+  // ===== LOGIN MODAL =====
+  toggleForm.onclick = () => {
+    isLogin = !isLogin;
+    formTitle.innerText = isLogin ? "Login" : "Register";
+    loginSubmit.style.display = isLogin ? "block" : "none";
+    registerSubmit.style.display = isLogin ? "none" : "block";
+    toggleForm.innerText =
+      isLogin ? "New user? Register" : "Already have account? Login";
+  };
+
+  loginSubmit.onclick = async () => {
+    await loginUser(email.value, password.value);
+    loginModal.style.display = "none";
+  };
+
+  registerSubmit.onclick = async () => {
+    await registerUser(email.value, password.value);
+  };
+
+  googleBtn.onclick = async () => {
+    await googleLogin();
+    loginModal.style.display = "none";
+  };
+
+  forgotPass.onclick = () => forgotPassword(email.value);
+
+  // ===== GAME LOGIC =====
+  function showLoginToBuy() {
+    actionArea.innerHTML = `
+      <button onclick="openLogin()">Login to Buy</button>
+    `;
+  }
+
+  window.openLogin = () => {
+    loginModal.style.display = "flex";
+  };
+
+  async function updateGameUI() {
+    const data = await getUserData(currentUser.uid);
+
+    if (data?.purchased_games?.[GAME_ID]) {
+      actionArea.innerHTML = `
+        <p>✅ You own this game</p>
+        <button onclick="downloadGame()">Download Game</button>
+      `;
+    } else {
+      actionArea.innerHTML = `
+        <button onclick="buyGame()">Buy Game Rs.29</button>
+      `;
+    }
+  }
+
+  window.buyGame = () => {
+    alert("Payment system will be added next.");
+  };
+
+  window.downloadGame = () => {
+    alert("Download logic later.");
+  };
+</script>
+
+</body>
+</html>

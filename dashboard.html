@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Profile</title>
+</head>
+<body>
+
+<h2>Profile</h2>
+
+<p>Email: <span id="emailText"></span></p>
+
+<h3>Change Password</h3>
+<input id="newPass" type="password" placeholder="New password">
+<button id="changePassBtn">Change</button>
+
+<br><br>
+<button id="logoutBtn">Logout</button>
+
+<script type="module">
+  import { checkAuth, logoutUser } from "./firebase.js";
+  import { getAuth, updatePassword } from
+    "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+  const auth = getAuth();
+
+  checkAuth((user) => {
+    if (!user) {
+      window.location.href = "index.html";
+    } else {
+      emailText.innerText = user.email;
+    }
+  });
+
+  changePassBtn.onclick = async () => {
+    await updatePassword(auth.currentUser, newPass.value);
+    alert("Password changed");
+  };
+
+  logoutBtn.onclick = logoutUser;
+</script>
+
+</body>
+</html>
