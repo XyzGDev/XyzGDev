@@ -305,7 +305,7 @@
         <hr>
 
         <h3>Paid Version (No Ads)</h3>
-        <button onclick="buyGame()">💰 Pay ₹29 & Download</button>
+        <button onclick="buyGame()">💰 Pay ₹9 & Download</button>
       `;
     }
   }
@@ -321,7 +321,7 @@
 
   // ===== PAYMENT PLACEHOLDER =====
   window.buyGame = async () => {
-  const res = await fetch("http://localhost:5000/create-order", {
+  const res = await fetch("https://xyzgdev-backend.onrender.com/create-order", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -341,7 +341,7 @@
     order_id: order.id,
 
     handler: async function (response) {
-      await fetch("http://localhost:5000/verify-payment", {
+      await fetch("https://xyzgdev-backend.onrender.com/verify-payment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
